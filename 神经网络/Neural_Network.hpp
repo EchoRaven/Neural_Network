@@ -50,13 +50,39 @@ double GetSigmaOfVector(const vector<type>& arr)
 
 //打印数组
 template<typename type>
-void PrintVector(vector<type>arr)
+void PrintVector(const vector<type>&arr)
 {
-	for (typename vector<type>::iterator it = arr.begin(); it != arr.end(); it++)
+	for (typename vector<type>::const_iterator it = arr.begin(); it != arr.end(); it++)
 	{
 		cout << setiosflags(ios::left) << setw(8) << fixed << setprecision(2) << *it;
 	}
 	cout << endl;
+}
+
+//寻找最大值
+template<typename type>
+type FindMax(const vector<type>&arr)
+{
+	type maxnum = arr[0];
+	for (typename vector<type>::const_iterator it = arr.begin(); it != arr.end(); it++)
+	{
+		if (*it > maxnum)
+			maxnum = *it;
+	}
+	return maxnum;
+}
+
+//寻找最小值
+template<typename type>
+type FindMin(const vector<type>&arr)
+{
+	type minnum = arr[0];
+	for (typename vector<type>::const_iterator it = arr.begin(); it != arr.end(); it++)
+	{
+		if (*it < minnum)
+			minnum = *it;
+	}
+	return minnum;
 }
 
 
@@ -80,6 +106,15 @@ private:
 
 	//神经网络输出端参数
 	vector<double> result;
+
+	//神经网络前向转化数组
+	vector<double> front_change;
+
+	//神经网络的补偿数;
+	double compensate;
+
+	//转化后的预估结果
+	vector<double> predict_result;
 
 	//附加参数信息
 	//列表均值
@@ -117,10 +152,11 @@ public:
 
 	//参数处理函数-3
 	//功能:数据的Z-score标准化
-	void StdZscore();
+	void StdZscore(bool change_result);
 
-	//参数处理函数-3
-	//功能:归一化处理
+	//参数处理函数-4
+	//功能:特征归一化处理
+	void Normalize();
 
 	//打印特征均值数组
 	void PrintFeatureMean();
@@ -143,11 +179,35 @@ public:
 	//获取统计结果
 	void PrintStatistics();
 
+	//打印预测结果和实际结果
+	void PrintPredict_Result();
+
 	//获取处理(或者没有处理)的特征列表
 	vector<vector<double>> GetFeature();
 
 	//获取处理(或者没有处理)的结果列表
 	vector<double> GetResult();
+
+	//预测函数
+	double Predict(const vector<Intype>&Inf);
+
+	//损失估计函数Loss
+	double Loss();
+
+	//梯度下降函数(front_change[index]的梯度)
+	double Gradient_W(int index);
+
+	//梯度下降函数(compensate的梯度)
+	double Gradient_B();
+
+	//更新预测数组
+	void Update_predict();
+
+	//训练前向转化数组(max_iter是最大迭代次数,eta是每次变化的步长)
+	void TrainTransform(int max_iter, double eta);
+
+	//获取转化函数
+	void PrintTransform();
 };
 
 
@@ -178,6 +238,12 @@ Neural_Network<Intype, Outtype>::Neural_Network(const vector<vector<Intype>> &f,
 	mean_r = GetMeanOfVector(r);
 	middle_r = GetMiddleOfVector(r);
 	sigma_r = GetSigmaOfVector(r);
+	for (UI k = 0; k < data_num; k++)
+	{
+		front_change.push_back(0);
+		predict_result.push_back(0);
+	}
+	compensate = 0;
 }
 
 //显示数据内容的工具
@@ -246,6 +312,7 @@ void Neural_Network<Intype, Outtype>::FillByMean()
 		middle_r = GetMiddleOfVector(result);
 		sigma_r = GetSigmaOfVector(result);
 	}
+	Update_predict();
 }
 
 //用中位数填充空缺的数据
@@ -279,11 +346,12 @@ void Neural_Network<Intype, Outtype>::FillByMiddle()
 		middle_r = GetMiddleOfVector(result);
 		sigma_r = GetSigmaOfVector(result);
 	}
+	Update_predict();
 }
 
 //数据Z-score标准化
 template<typename Intype, typename Outtype>
-void Neural_Network<Intype, Outtype>::StdZscore()
+void Neural_Network<Intype, Outtype>::StdZscore(bool change_result)
 {
 	for (UI i = 0; i < feature.size(); i++)
 	{
@@ -295,13 +363,40 @@ void Neural_Network<Intype, Outtype>::StdZscore()
 		middle_f[i] = GetMiddleOfVector(feature[i]);
 		sigma_f[i] = GetSigmaOfVector(feature[i]);
 	}
-	for (UI i = 0; i < result.size(); i++)
+	if (change_result)
 	{
-		result[i] = (result[i] - mean_r) / sigma_r;
+		for (UI i = 0; i < result.size(); i++)
+		{
+			result[i] = (result[i] - mean_r) / sigma_r;
+		}
+		mean_r = GetMeanOfVector(result);
+		middle_r = GetMiddleOfVector(result);
+		sigma_r = GetSigmaOfVector(result);
 	}
-	mean_r = GetMeanOfVector(result);
-	middle_r = GetMiddleOfVector(result);
-	sigma_r = GetSigmaOfVector(result);
+	Update_predict();
+}
+
+//特征归一化处理
+template<typename Intype, typename Outtype>
+void Neural_Network<Intype, Outtype>::Normalize()
+{
+	double maxnum;
+	double minnum;
+	double deta;
+	for (UI i = 0; i < feature.size(); i++)
+	{
+		maxnum = FindMax(feature[i]);
+		minnum = FindMin(feature[i]);
+		deta = maxnum - minnum;
+		for (UI j = 0; j < feature[i].size(); j++)
+		{
+			feature[i][j] = (feature[i][j] - minnum) / deta;
+		}
+		mean_f[i] = GetMeanOfVector(feature[i]);
+		middle_f[i] = GetMiddleOfVector(feature[i]);
+		sigma_f[i] = GetSigmaOfVector(feature[i]);
+	}
+	Update_predict();
 }
 
 //显示特征值的均值数组
@@ -364,6 +459,17 @@ void Neural_Network<Intype, Outtype>::PrintStatistics()
 	PrintResultSigma();
 }
 
+//打印预测结果与实际结果
+template<typename Intype, typename Outtype>
+void Neural_Network<Intype, Outtype>::PrintPredict_Result()
+{
+	cout << setiosflags(ios::left) << setw(8) << "Predict : " << setw(8) << "Result : " << endl;
+	for (int i = 0; i < data_num; i++)
+	{
+		cout << setw(8) << predict_result[i] << setw(8) << result[i] << endl;
+	}
+}
+
 //获取特征列表
 template<typename Intype, typename Outtype>
 vector<vector<double>>  Neural_Network<Intype, Outtype>::GetFeature()
@@ -373,7 +479,142 @@ vector<vector<double>>  Neural_Network<Intype, Outtype>::GetFeature()
 
 //获取结果列表
 template<typename Intype, typename Outtype>
-vector<double>  Neural_Network<Intype, Outtype>::GetResult()
+vector<double> Neural_Network<Intype, Outtype>::GetResult()
 {
 	return result;
+}
+
+//预估函数
+template<typename Intype, typename Outtype>
+double Neural_Network<Intype, Outtype>::Predict(const vector<Intype>&Inf)
+{
+	double r = 0;
+	for (UI i = 0; i < Inf.size(); i++)
+	{
+		r += double(Inf[i]) * double(front_change[i]);
+	}
+	r += compensate;
+	return r;
+}
+
+//损失估计函数
+template<typename Intype, typename Outtype>
+double Neural_Network<Intype, Outtype>::Loss()
+{
+	Update_predict();
+	double total = 0;
+	UI Min = min(result.size(), predict_result.size());
+	for (UI i = 0; i < Min; i++)
+	{
+		total += (predict_result[i] - result[i]) * (predict_result[i] - result[i]);
+	}
+	total = total / Min / 2;
+	return total;
+}
+
+//梯度下降函数(计算front_change[index]的梯度)
+template<typename Intype, typename Outtype>
+double Neural_Network<Intype, Outtype>::Gradient_W(int index)
+{
+	double total = 0;
+	UI Min = min(result.size(), predict_result.size());
+	for (UI i = 0; i < Min; i++)
+	{
+		total += (predict_result[i] - result[i]) * feature[index][i];
+	}
+	total = total / Min;
+	return total;
+}
+
+//梯度下降函数(计算compensate的梯度)
+template<typename Intype, typename Outtype>
+double Neural_Network<Intype, Outtype>::Gradient_B()
+{
+	double total = 0;
+	UI Min = min(result.size(), predict_result.size());
+	for (UI i = 0; i < Min; i++)
+	{
+		total += (predict_result[i] - result[i]);
+	}
+	total = total / Min;
+	return total;
+}
+
+//更新预测数组
+template<typename Intype, typename Outtype>
+void Neural_Network<Intype, Outtype>::Update_predict()
+{
+	for (UI i = 0; i < data_num; i++)
+	{
+		vector<Intype>arr;
+		for (UI j = 0; j < feature_num; j++)
+			arr.push_back(feature[j][i]);
+		predict_result[i] = Predict(arr);
+	}
+}
+
+//训练转化函数
+template<typename Intype, typename Outtype>
+void Neural_Network<Intype, Outtype>::TrainTransform(int max_iter,double eta)
+{
+	for (int i = 0; i < max_iter; i++)
+	{
+		//在每一次迭代过程中，对所有的参数进行修改
+		for (UI i = 0; i < feature_num; i++)
+		{
+			Update_predict();
+			double G1 = abs(Gradient_W(i));
+			double temp = front_change[i];
+			front_change[i] = temp + eta;
+			Update_predict();
+			double G2= abs(Gradient_W(i));
+			front_change[i] = temp - eta;
+			Update_predict();
+			double G3 = abs(Gradient_W(i));
+			front_change[i] = temp;
+			if (G2 < G1 && G2 < G3)
+			{
+				front_change[i] = temp + eta;
+			}
+			else if (G3 < G1 && G3 < G2)
+			{
+				front_change[i] = temp + eta;
+			}
+			Update_predict();
+		}
+		Update_predict();
+		double G1 = abs(Gradient_B());
+		double temp = compensate;
+		compensate = temp + eta;
+		Update_predict();
+		double G2 = abs(Gradient_B());
+		compensate = temp - eta;
+		Update_predict();
+		double G3 = abs(Gradient_B());
+		compensate = temp;
+		if (G2 < G1 && G2 < G3)
+		{
+			compensate = temp + eta;
+		}
+		else if (G3 < G1 && G3 < G2)
+		{
+			compensate = temp + eta;
+		}
+		Update_predict();
+	}
+	return;
+}
+
+//获取转化函数
+template<typename Intype, typename Outtype>
+void Neural_Network<Intype, Outtype>::PrintTransform()
+{
+	cout << "前向转化数组为 : ";
+	for (UI i = 0; i < feature_num; i++)
+	{
+		cout << setiosflags(ios::left) << setw(8) << front_change[i];
+	}
+	cout << endl;
+	cout << "补偿参数为 : ";
+	cout << setiosflags(ios::left) << setw(8) << compensate << endl;
 }
