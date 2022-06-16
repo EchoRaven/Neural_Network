@@ -200,6 +200,12 @@ public:
 	//梯度下降函数(compensate的梯度)
 	double Gradient_B();
 
+	//二阶梯度下降函数(compensate的梯度)
+	double Gradient_B_double();
+
+	//二阶梯度
+	double Gradient_W_double(int index);
+
 	//更新预测数组
 	void Update_predict();
 
@@ -464,7 +470,7 @@ template<typename Intype, typename Outtype>
 void Neural_Network<Intype, Outtype>::PrintPredict_Result()
 {
 	cout << setiosflags(ios::left) << setw(8) << "Predict : " << setw(8) << "Result : " << endl;
-	for (int i = 0; i < data_num; i++)
+	for (UI i = 0; i < data_num; i++)
 	{
 		cout << setw(8) << predict_result[i] << setw(8) << result[i] << endl;
 	}
@@ -526,6 +532,20 @@ double Neural_Network<Intype, Outtype>::Gradient_W(int index)
 	return total;
 }
 
+//二阶梯度下降函数(计算front_change[index]的二阶梯度)
+template<typename Intype, typename Outtype>
+double Neural_Network<Intype, Outtype>::Gradient_W_double(int index)
+{
+	double total = 0;
+	UI Min = min(result.size(), predict_result.size());
+	for (UI i = 0; i < Min; i++)
+	{
+		total += feature[index][i] * feature[index][i];
+	}
+	total = total / Min;
+	return total;
+}
+
 //梯度下降函数(计算compensate的梯度)
 template<typename Intype, typename Outtype>
 double Neural_Network<Intype, Outtype>::Gradient_B()
@@ -535,6 +555,20 @@ double Neural_Network<Intype, Outtype>::Gradient_B()
 	for (UI i = 0; i < Min; i++)
 	{
 		total += (predict_result[i] - result[i]);
+	}
+	total = total / Min;
+	return total;
+}
+
+//二阶梯度下降函数(计算compensate的梯度)
+template<typename Intype, typename Outtype>
+double Neural_Network<Intype, Outtype>::Gradient_B_double()
+{
+	double total = 0;
+	UI Min = min(result.size(), predict_result.size());
+	for (UI i = 0; i < Min; i++)
+	{
+		total += 1;
 	}
 	total = total / Min;
 	return total;
@@ -563,11 +597,12 @@ void Neural_Network<Intype, Outtype>::TrainTransform(int max_iter,double eta)
 		for (UI i = 0; i < feature_num; i++)
 		{
 			Update_predict();
+			//double base = Gradient_W_double(i);
 			double G1 = abs(Gradient_W(i));
 			double temp = front_change[i];
 			front_change[i] = temp + eta;
 			Update_predict();
-			double G2= abs(Gradient_W(i));
+			double G2 = abs(Gradient_W(i));
 			front_change[i] = temp - eta;
 			Update_predict();
 			double G3 = abs(Gradient_W(i));
@@ -578,10 +613,11 @@ void Neural_Network<Intype, Outtype>::TrainTransform(int max_iter,double eta)
 			}
 			else if (G3 < G1 && G3 < G2)
 			{
-				front_change[i] = temp + eta;
+				front_change[i] = temp - eta;
 			}
 			Update_predict();
 		}
+		//double base = Gradient_B_double();
 		Update_predict();
 		double G1 = abs(Gradient_B());
 		double temp = compensate;
@@ -598,7 +634,7 @@ void Neural_Network<Intype, Outtype>::TrainTransform(int max_iter,double eta)
 		}
 		else if (G3 < G1 && G3 < G2)
 		{
-			compensate = temp + eta;
+			compensate = temp - eta;
 		}
 		Update_predict();
 	}

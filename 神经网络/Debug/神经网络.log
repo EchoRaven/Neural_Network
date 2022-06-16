@@ -1,9 +1,5 @@
 ﻿  Neural_Network_main.cpp
-C:\Users\thb\Desktop\time-all-ai_project\神经网络\神经网络\Neural_Network.hpp(467,20): warning C4018: “<”: 有符号/无符号不匹配
-C:\Users\thb\Desktop\time-all-ai_project\神经网络\神经网络\Neural_Network.hpp(465): message : 在编译 类 模板 成员函数“void Neural_Network<int,double>::PrintPredict_Result(void)”时
-C:\Users\thb\Desktop\time-all-ai_project\神经网络\神经网络\Neural_Network_main.cpp(13): message : 查看对正在编译的函数 模板 实例化“void Neural_Network<int,double>::PrintPredict_Result(void)”的引用
-C:\Users\thb\Desktop\time-all-ai_project\神经网络\神经网络\Neural_Network_main.cpp(9): message : 查看对正在编译的 类 模板 实例化“Neural_Network<int,double>”的引用
-C:\Users\thb\Desktop\time-all-ai_project\神经网络\神经网络\Neural_Network.hpp(551,30): warning C4244: “参数”: 从“_Ty”转换到“_Ty”，可能丢失数据
+C:\Users\thb\Desktop\time-all-ai_project\神经网络\神经网络\Neural_Network.hpp(585,30): warning C4244: “参数”: 从“_Ty”转换到“_Ty”，可能丢失数据
           with
           [
               _Ty=double
@@ -12,8 +8,9 @@ C:\Users\thb\Desktop\time-all-ai_project\神经网络\神经网络\Neural_Networ
           [
               _Ty=int
           ]
-C:\Users\thb\Desktop\time-all-ai_project\神经网络\神经网络\Neural_Network.hpp(546): message : 在编译 类 模板 成员函数“void Neural_Network<int,double>::Update_predict(void)”时
-C:\Users\thb\Desktop\time-all-ai_project\神经网络\神经网络\Neural_Network.hpp(565): message : 查看对正在编译的函数 模板 实例化“void Neural_Network<int,double>::Update_predict(void)”的引用
-C:\Users\thb\Desktop\time-all-ai_project\神经网络\神经网络\Neural_Network.hpp(217): message : 在编译 类 模板 成员函数“Neural_Network<int,double>::Neural_Network(const std::vector<std::vector<int,std::allocator<int>>,std::allocator<std::vector<int,std::allocator<int>>>> &,const std::vector<double,std::allocator<double>> &)”时
+C:\Users\thb\Desktop\time-all-ai_project\神经网络\神经网络\Neural_Network.hpp(580): message : 在编译 类 模板 成员函数“void Neural_Network<int,double>::Update_predict(void)”时
+C:\Users\thb\Desktop\time-all-ai_project\神经网络\神经网络\Neural_Network.hpp(405): message : 查看对正在编译的函数 模板 实例化“void Neural_Network<int,double>::Update_predict(void)”的引用
+C:\Users\thb\Desktop\time-all-ai_project\神经网络\神经网络\Neural_Network.hpp(223): message : 在编译 类 模板 成员函数“Neural_Network<int,double>::Neural_Network(const std::vector<std::vector<int,std::allocator<int>>,std::allocator<std::vector<int,std::allocator<int>>>> &,const std::vector<double,std::allocator<double>> &)”时
 C:\Users\thb\Desktop\time-all-ai_project\神经网络\神经网络\Neural_Network_main.cpp(9): message : 查看对正在编译的函数 模板 实例化“Neural_Network<int,double>::Neural_Network(const std::vector<std::vector<int,std::allocator<int>>,std::allocator<std::vector<int,std::allocator<int>>>> &,const std::vector<double,std::allocator<double>> &)”的引用
+C:\Users\thb\Desktop\time-all-ai_project\神经网络\神经网络\Neural_Network_main.cpp(9): message : 查看对正在编译的 类 模板 实例化“Neural_Network<int,double>”的引用
   神经网络.vcxproj -> C:\Users\thb\Desktop\time-all-ai_project\神经网络\Debug\神经网络.exe
